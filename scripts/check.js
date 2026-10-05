@@ -108,19 +108,52 @@ try {
       return false;
     }));
 
-  await page.waitForTimeout(700);
-  check('a smoothed preview is shown before saving',
-    await page.locator('#preview-wrap').isVisible());
+  await page.waitForTimeout(400);
   await page.screenshot({ path: path.join(OUT, '1-capture.png') });
 
-  check('Save becomes available once both are done',
+  check('Done becomes available once the name and signature are both there',
     !(await page.locator('#submit-btn').isDisabled()));
 
+  /* ---- the review step ---- */
   await page.locator('#submit-btn').tap();
+  await page.waitForSelector('#review:not([hidden])', { timeout: 10000 });
+  check('the smoothed signature is shown for approval before anything is sent',
+    await page.locator('#review-img').isVisible());
+  check('nothing has been saved at the review step',
+    !fs.existsSync(path.join(TMP, 'signatures')) ||
+    fs.readdirSync(path.join(TMP, 'signatures')).length === 0,
+    'files appeared before the person accepted');
+  check('the review names the person it is about',
+    (await page.locator('#review-name').textContent()).trim() === 'Jane Mahlangu');
+  await page.screenshot({ path: path.join(OUT, '2-review.png') });
+
+  const approved = await page.locator('#review-img').getAttribute('src');
+
+  /* ---- redo really discards ---- */
+  await page.locator('#redo-btn').tap();
+  await page.waitForSelector('#stage:not([hidden])', { timeout: 10000 });
+  check('Sign again returns to an empty pad, keeping the name',
+    (await page.inputValue('#first-name')) === 'Jane' &&
+    (await page.locator('#submit-btn').isDisabled()));
+  check('Sign again saved nothing',
+    !fs.existsSync(path.join(TMP, 'signatures')) ||
+    fs.readdirSync(path.join(TMP, 'signatures')).length === 0);
+
+  // Sign a second time and accept that one.
+  await stroke(loop);
+  await stroke([[pad.x + 60, cy + 26], [pad.x + 110, cy + 18], [pad.x + 160, cy + 24]]);
+  await page.locator('#submit-btn').tap();
+  await page.waitForSelector('#review:not([hidden])', { timeout: 10000 });
+
+  const secondRender = await page.locator('#review-img').getAttribute('src');
+  check('signing again produces a different image, not the discarded one',
+    secondRender !== approved);
+
+  await page.locator('#accept-btn').tap();
   await page.waitForSelector('#thanks:not([hidden])', { timeout: 15000 });
   check('saving confirms and thanks the person by name',
     (await page.locator('#thanks-name').textContent()) === 'Jane Mahlangu');
-  await page.screenshot({ path: path.join(OUT, '2-thanks.png') });
+  await page.screenshot({ path: path.join(OUT, '3-thanks.png') });
 
   await page.locator('#again-btn').tap();
   await page.waitForTimeout(250);
@@ -135,6 +168,11 @@ try {
   const json = files.filter((f) => f.endsWith('.json'));
   check('a PNG and its raw strokes are both stored', png.length === 1 && json.length === 1,
     files.join(', '));
+
+  const savedDataUri = 'data:image/png;base64,' +
+    fs.readFileSync(path.join(TMP, 'signatures', png[0])).toString('base64');
+  check('the file saved is exactly the image the person approved', savedDataUri === secondRender,
+    'the saved image differs from the one shown for approval');
 
   const img = PNG.sync.read(fs.readFileSync(path.join(TMP, 'signatures', png[0])));
   check('the PNG is trimmed to the ink, not the whole pad',
@@ -184,7 +222,7 @@ try {
   check('the first run creates the single administrator', ap.url().endsWith('/admin'));
 
   check('the captured signature is listed', (await ap.locator('.sig-card').count()) === 1);
-  await ap.screenshot({ path: path.join(OUT, '3-admin.png'), fullPage: true });
+  await ap.screenshot({ path: path.join(OUT, '4-admin.png'), fullPage: true });
 
   const second = await browser.newContext();
   const sp = await second.newPage();

@@ -37,16 +37,31 @@
 
       <div class="pad-actions">
         <button type="button" class="btn btn-ghost" id="clear-btn">Clear</button>
-        <button type="submit" class="btn" id="submit-btn" disabled>Save my signature</button>
-      </div>
-
-      <div class="preview-wrap" id="preview-wrap" hidden>
-        <span class="preview-label">How it will be saved</span>
-        <img id="preview" alt="Your signature, smoothed">
+        <button type="submit" class="btn" id="submit-btn" disabled>Done</button>
       </div>
 
       <p class="notice notice-bad" id="capture-error" hidden></p>
     </form>
+  </div>
+
+  <%# Nothing is sent until this is accepted. The image shown here is the exact
+      file that gets saved, not a re-render of it. %>
+  <div id="review" class="review" hidden>
+    <h1>Is this your signature?</h1>
+    <p class="sub">This is exactly how it will be saved. Take a look before you accept it.</p>
+
+    <div class="review-paper">
+      <img id="review-img" alt="Your signature as it will be saved">
+    </div>
+
+    <p class="review-name" id="review-name"></p>
+
+    <div class="review-actions">
+      <button type="button" class="btn btn-ghost" id="redo-btn">No, sign again</button>
+      <button type="button" class="btn" id="accept-btn">Yes, that is mine</button>
+    </div>
+
+    <p class="notice notice-bad" id="review-error" hidden></p>
   </div>
 
   <div id="thanks" class="thanks" hidden>

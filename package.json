@@ -7,7 +7,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "check": "node scripts/check.js",
-    "ink-preview": "node scripts/ink-preview.js"
+    "ink-preview": "node scripts/ink-preview.js",
+    "walkthrough": "node scripts/walkthrough.js"
   },
   "keywords": [],
   "author": "",
