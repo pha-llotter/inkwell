@@ -261,7 +261,7 @@ input::placeholder { color: var(--text-3); opacity: .8; }
   display: grid; place-items: center;
   box-shadow: var(--sh-sm);
 }
-.review-paper img { max-height: 150px; max-width: 100%; width: auto; }
+.review-paper img { max-height: 150px; max-width: 100%; width: auto; height: auto; object-fit: contain; }
 
 .review-name {
   margin: 14px 0 26px; font-size: 15px; font-weight: 640; color: var(--text-2);
@@ -288,7 +288,13 @@ input::placeholder { color: var(--text-3); opacity: .8; }
 /* A checkerboard, so a transparent PNG reads as transparent rather than as a
    white rectangle that will not sit cleanly on a form. */
 .sig-ink {
-  display: grid; place-items: center; height: 136px; padding: 12px;
+  /* Flex with an explicit pixel cap on the image, rather than grid with
+     max-height:100%. A percentage height inside a centred grid area has nothing
+     definite to resolve against, so the image fell back to its natural size and
+     spilled over the name and the buttons below it. overflow is belt and braces
+     for a signature with an unusual aspect ratio. */
+  display: flex; align-items: center; justify-content: center;
+  height: 150px; padding: 12px; overflow: hidden;
   background-color: #fff;
   background-image:
     linear-gradient(45deg, #eef1f5 25%, transparent 25%, transparent 75%, #eef1f5 75%),
@@ -297,7 +303,11 @@ input::placeholder { color: var(--text-3); opacity: .8; }
   background-position: 0 0, 8px 8px;
   border-bottom: 1px solid var(--border);
 }
-.sig-ink img { max-height: 100%; max-width: 100%; object-fit: contain; }
+.sig-ink img {
+  /* 150px box less 12px padding top and bottom. */
+  max-height: 126px; max-width: 100%;
+  width: auto; height: auto; object-fit: contain;
+}
 .sig-meta { padding: 12px 14px 4px; }
 .sig-meta strong { display: block; font-size: 14.5px; }
 .sig-meta .hint { margin-top: 2px; font-size: 12px; }

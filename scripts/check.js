@@ -222,6 +222,26 @@ try {
   check('the first run creates the single administrator', ap.url().endsWith('/admin'));
 
   check('the captured signature is listed', (await ap.locator('.sig-card').count()) === 1);
+
+  // A tall or wide signature must scale inside its card, not spill over the
+  // name and buttons underneath it.
+  await ap.waitForFunction(() => {
+    const i = document.querySelector('.sig-ink img');
+    return i && i.complete && i.naturalWidth > 0;
+  }, null, { timeout: 10000 });
+
+  const fits = await ap.evaluate(() => {
+    const box = document.querySelector('.sig-ink').getBoundingClientRect();
+    const img = document.querySelector('.sig-ink img').getBoundingClientRect();
+    return {
+      overflowY: Math.round(Math.max(0, box.top - img.top) + Math.max(0, img.bottom - box.bottom)),
+      overflowX: Math.round(Math.max(0, box.left - img.left) + Math.max(0, img.right - box.right)),
+      imgH: Math.round(img.height), boxH: Math.round(box.height),
+    };
+  });
+  check('the signature fits inside its card rather than spilling out',
+    fits.overflowY <= 1 && fits.overflowX <= 1,
+    `overflow ${fits.overflowX}px across, ${fits.overflowY}px down (image ${fits.imgH}px in a ${fits.boxH}px box)`);
   await ap.screenshot({ path: path.join(OUT, '4-admin.png'), fullPage: true });
 
   const second = await browser.newContext();
@@ -240,6 +260,47 @@ try {
   check('the ZIP of everything downloads and is a real ZIP',
     dl.status === 200 && dl.head[0] === 0x50 && dl.head[1] === 0x4b && dl.bytes > 200,
     `status ${dl.status}, ${dl.bytes} bytes, magic ${dl.head}`);
+
+  /* ---- an awkwardly shaped signature still fits ---- */
+  // A tall narrow scrawl is the shape that broke the card: it is the aspect
+  // ratio furthest from the box's own.
+  const tallPage = await ctx.newPage();
+  const tallCdp = await ctx.newCDPSession(tallPage);
+  await tallPage.goto(BASE);
+  await tallPage.fill('#first-name', 'Tall');
+  await tallPage.fill('#last-name', 'Scrawl');
+  const tp = await tallPage.locator('#pad').boundingBox();
+  const tpt = (x, y) => [{ x, y, radiusX: 10, radiusY: 10, force: 1 }];
+  await tallCdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: tpt(tp.x + tp.width * 0.45, tp.y + 14) });
+  for (let i = 1; i <= 24; i++) {
+    await tallCdp.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: tpt(tp.x + tp.width * 0.45 + (i % 2 ? 9 : -9), tp.y + 14 + (i / 24) * (tp.height - 28)),
+    });
+    await tallPage.waitForTimeout(12);
+  }
+  await tallCdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await tallPage.waitForTimeout(250);
+  await tallPage.locator('#submit-btn').tap();
+  await tallPage.waitForSelector('#review:not([hidden])', { timeout: 10000 });
+  await tallPage.locator('#accept-btn').tap();
+  await tallPage.waitForSelector('#thanks:not([hidden])', { timeout: 15000 });
+
+  await ap.reload();
+  await ap.waitForFunction(() => {
+    const imgs = [...document.querySelectorAll('.sig-ink img')];
+    return imgs.length === 2 && imgs.every((i) => i.complete && i.naturalWidth > 0);
+  }, null, { timeout: 10000 });
+
+  const allFit = await ap.evaluate(() => [...document.querySelectorAll('.sig-card')].map((card) => {
+    const box = card.querySelector('.sig-ink').getBoundingClientRect();
+    const img = card.querySelector('.sig-ink img').getBoundingClientRect();
+    return Math.round(Math.max(0, box.top - img.top) + Math.max(0, img.bottom - box.bottom)
+      + Math.max(0, box.left - img.left) + Math.max(0, img.right - box.right));
+  }));
+  check('a tall narrow signature fits its card too', allFit.every((o) => o <= 1),
+    `overflow per card: ${allFit.join(', ')}px`);
+  await ap.screenshot({ path: path.join(OUT, '5-admin-shapes.png'), fullPage: true });
 
   /* ---- tuning ---- */
   await ap.goto(`${BASE}/admin/tuning`);
