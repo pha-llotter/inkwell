@@ -1,0 +1,64 @@
+<%- include('partials/head', { title: 'Sign here' }) %>
+<%- include('partials/bar') %>
+
+<main class="capture">
+  <div id="stage">
+    <div class="capture-head">
+      <h1>Capture your signature</h1>
+      <p class="sub">Type your name, sign in the box, and it is saved. Nothing else is asked for.</p>
+    </div>
+
+    <form id="capture-form" novalidate>
+      <div class="grid-2">
+        <div class="field">
+          <label for="first-name">Name</label>
+          <input id="first-name" name="firstName" type="text" autocomplete="given-name"
+                 maxlength="80" required autofocus>
+        </div>
+        <div class="field">
+          <label for="last-name">Surname</label>
+          <input id="last-name" name="lastName" type="text" autocomplete="family-name"
+                 maxlength="80" required>
+        </div>
+      </div>
+
+      <%# Hidden from people, filled in by naive bots. Never shown, never read by
+          a screen reader, and the server answers normally when it is filled. %>
+      <div class="hp" aria-hidden="true">
+        <label for="website">Leave this empty</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+
+      <div class="pad-wrap">
+        <canvas id="pad" aria-label="Sign with your finger or a stylus"></canvas>
+        <div class="pad-base" aria-hidden="true"></div>
+        <p class="pad-hint" id="pad-hint">Sign here</p>
+      </div>
+
+      <div class="pad-actions">
+        <button type="button" class="btn btn-ghost" id="clear-btn">Clear</button>
+        <button type="submit" class="btn" id="submit-btn" disabled>Save my signature</button>
+      </div>
+
+      <div class="preview-wrap" id="preview-wrap" hidden>
+        <span class="preview-label">How it will be saved</span>
+        <img id="preview" alt="Your signature, smoothed">
+      </div>
+
+      <p class="notice notice-bad" id="capture-error" hidden></p>
+    </form>
+  </div>
+
+  <div id="thanks" class="thanks" hidden>
+    <div class="tick" aria-hidden="true">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>
+    </div>
+    <h1>Thank you</h1>
+    <p class="sub">Your signature has been saved, <strong id="thanks-name"></strong>.</p>
+    <button type="button" class="btn" id="again-btn">Capture another</button>
+  </div>
+</main>
+
+<%- include('partials/foot') %>
+<script type="module" src="/static/js/capture.js?v=<%= v %>"></script>

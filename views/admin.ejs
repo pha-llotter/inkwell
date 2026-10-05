@@ -1,0 +1,84 @@
+<%- include('partials/head', { title: 'Signatures' }) %>
+<%- include('partials/bar') %>
+
+<main>
+  <div class="wrap">
+    <div class="page-head">
+      <div>
+        <h1>Signatures</h1>
+        <p class="sub">
+          <% if (q) { %>
+            <%= rows.length %> result<%= rows.length === 1 ? '' : 's' %> for "<%= q %>" ·
+            <a href="/admin">clear search</a>
+          <% } else { %>
+            <%= total %> captured
+          <% } %>
+        </p>
+      </div>
+      <div class="spacer"></div>
+      <% if (total) { %>
+        <a class="btn" href="/admin/download.zip">Download all as ZIP</a>
+      <% } %>
+    </div>
+
+    <form class="search" method="get" action="/admin" role="search">
+      <input type="search" name="q" value="<%= q %>" placeholder="Search by name or surname" aria-label="Search signatures">
+    </form>
+
+    <% if (!rows.length) { %>
+      <div class="card">
+        <div class="empty">
+          <p style="font-size:16px;margin:0 0 6px;color:var(--text-2)">
+            <%= q ? 'Nothing matches that search.' : 'No signatures yet.' %>
+          </p>
+          <p style="margin:0 0 18px">
+            Open the capture page and hand the device over, or share its link.
+          </p>
+          <a class="btn btn-ghost" href="/" target="_blank" rel="noopener">Open the capture page</a>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="sig-grid">
+        <% rows.forEach(function (r) { %>
+          <div class="sig-card">
+            <div class="sig-ink">
+              <%# Checkerboard behind it, so a transparent PNG reads as transparent
+                  rather than as a white rectangle that will not sit on a form. %>
+              <img src="/admin/<%= r.id %>.png" alt="Signature of <%= r.first_name %> <%= r.last_name %>" loading="lazy">
+            </div>
+            <div class="sig-meta">
+              <strong><%= r.first_name %> <%= r.last_name %></strong>
+              <span class="hint">
+                <%= new Date(r.created_at).toLocaleString() %> ·
+                <%= r.png_width %>x<%= r.png_height %> ·
+                <%= Math.round(r.png_bytes / 1024) %> KB
+              </span>
+            </div>
+            <div class="sig-actions">
+              <a class="btn btn-ghost btn-sm" href="/admin/<%= r.id %>/download">Download PNG</a>
+              <form method="post" action="/admin/<%= r.id %>/delete" class="inline"
+                    onsubmit="return confirm('Delete the signature for <%= r.first_name %> <%= r.last_name %>? This cannot be undone.')">
+                <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+              </form>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <div class="card" style="margin-top:18px">
+      <h2>Using these in your management system</h2>
+      <p class="hint">
+        Every file is a PNG with a transparent background, trimmed to the ink and rendered at three times the
+        captured size, so it stays crisp when placed or printed. Filenames are
+        <code>surname-name-id.png</code>.
+      </p>
+      <p class="hint">
+        The raw pen strokes are kept alongside each image. If you ever need them at a different size, colour or
+        line weight, they can be redrawn from the original without asking anyone to sign again.
+      </p>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/foot') %>

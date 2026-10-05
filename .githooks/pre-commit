@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# Refuses a commit that would publish secrets or captured signatures.
+# .gitignore is a convenience; git add -f, a rename or an edited rule all slip
+# past it, and anything committed once stays in history forever.
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$staged" ] && exit 0
+fail=0
+
+note() {
+  if [ "$fail" -eq 0 ]; then echo ""; echo "COMMIT BLOCKED"; echo "--------------"; fi
+  fail=1
+  echo "  $1"
+}
+
+for f in $staged; do
+  case "$f" in
+    .env|.env.*) [ "$f" = ".env.example" ] || note "$f  - holds credentials" ;;
+    .secrets/*)  note "$f  - generated secret" ;;
+    storage/*|*/storage/*) note "$f  - captured signatures and real names" ;;
+    *.db|*.db-wal|*.db-shm|*.sqlite|*.sqlite3) note "$f  - database file" ;;
+    *.key|*.pem|*.pfx|*.p12) note "$f  - key material" ;;
+  esac
+done
+
+for f in $staged; do
+  [ -f "$f" ] || continue
+  case "$f" in package-lock.json|.githooks/pre-commit|*.md) continue ;; esac
+  git diff --cached -- "$f" | grep -q '^+.*-----BEGIN .*PRIVATE KEY' && note "$f  - private key block"
+  git diff --cached -- "$f" | grep -qE '^\+.*(AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,})' && note "$f  - looks like a token"
+  git diff --cached -- "$f" | grep -qE '^\+.*SESSION_SECRET[[:space:]]*=[[:space:]]*[A-Za-z0-9+/=]{16,}' && note "$f  - a real SESSION_SECRET"
+done
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "  Unstage with:  git restore --staged <file>"
+  echo "  Genuine false alarm:  git commit --no-verify"
+  echo ""
+  exit 1
+fi
+exit 0

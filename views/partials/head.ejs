@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title><%= typeof title !== 'undefined' ? title + ' - ' : '' %><%= brand.name %></title>
+  <meta name="color-scheme" content="light dark">
+  <script>
+    /* Resolves the theme before the stylesheet paints, so a dark-mode device
+       does not flash white. Inline and synchronous on purpose. */
+    (function () {
+      var t;
+      try { t = localStorage.getItem('inkwell-theme'); } catch (e) { t = null; }
+      if (t !== 'light' && t !== 'dark') {
+        t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <%# Inline, so the browser never requests a favicon that is not there. %>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='19' font-size='19'>&#9999;</text></svg>">
+  <link rel="stylesheet" href="/static/css/app.css?v=<%= v %>">
+</head>
+<body class="<%= typeof bodyClass !== 'undefined' ? bodyClass : '' %>">

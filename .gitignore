@@ -1,0 +1,12 @@
+node_modules/
+
+# --- never commit: secrets and captured data -------------------------------
+.env
+.secrets/
+# Real people's signatures and names.
+storage/
+
+*.log
+ui-check/
+.DS_Store
+Thumbs.db

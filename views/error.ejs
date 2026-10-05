@@ -1,0 +1,10 @@
+<%- include('partials/head', { title: 'Error ' + code }) %>
+<%- include('partials/bar') %>
+<main>
+  <div class="auth card" style="text-align:center">
+    <div style="font-size:30px;font-weight:700;color:var(--text-3)"><%= code %></div>
+    <p style="margin:10px 0 20px"><%= message %></p>
+    <a class="btn btn-ghost" href="/">Back to the start</a>
+  </div>
+</main>
+<%- include('partials/foot') %>
