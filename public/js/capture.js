@@ -151,7 +151,12 @@ el.form.addEventListener('submit', (e) => {
 
   const rect = el.pad.getBoundingClientRect();
   // Rendered at 3x so the PNG stays crisp wherever it is placed afterwards.
-  const out = renderToPng(strokes, { width: rect.width, height: rect.height, scale: 3, padding: 10 });
+  // The administrator's tuning, chosen against real handwriting on this kind
+  // of device, rather than the shipped guess at an average finger.
+  const out = renderToPng(strokes, {
+    width: rect.width, height: rect.height, scale: 3, padding: 10,
+    ...(window.__INK__ || {}),
+  });
   if (!out) {
     el.error.textContent = 'That signature came out empty. Please sign again.';
     el.error.hidden = false;

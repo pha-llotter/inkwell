@@ -5,6 +5,7 @@ import path from 'node:path';
 import { config } from '../config.js';
 import { db, nowIso, clientIp } from '../db.js';
 import { uuid } from '../crypto.js';
+import { inkSettings } from '../ink-settings.js';
 
 const router = Router();
 
@@ -24,8 +25,11 @@ function rateLimited(ip) {
 }
 
 router.get('/', (req, res) => {
-  res.render('capture', { saved: null });
+  res.render('capture', { ink: inkSettings() });
 });
+
+/** Read-only, and public: the capture page is public and needs these to draw. */
+router.get('/api/ink-settings', (req, res) => res.json(inkSettings()));
 
 router.post('/api/capture', express_json_guard, (req, res) => {
   const ip = clientIp(req);

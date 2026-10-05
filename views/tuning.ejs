@@ -1,0 +1,96 @@
+<%- include('partials/head', { title: 'Tune the ink' }) %>
+<%- include('partials/bar') %>
+
+<main>
+  <div class="wrap">
+    <div class="page-head">
+      <div>
+        <h1>Tune the ink</h1>
+        <p class="sub">
+          Sign below as you normally would, on the device people will actually use, then adjust until it
+          looks right. Nothing here is saved as a signature.
+        </p>
+      </div>
+    </div>
+
+    <div class="tune">
+      <div class="tune-draw">
+        <div class="pad-wrap">
+          <canvas id="pad" aria-label="Sign here to test the settings"></canvas>
+          <p class="pad-hint" id="pad-hint">Sign here to test</p>
+        </div>
+        <div class="pad-actions">
+          <button type="button" class="btn btn-ghost" id="clear-btn">Clear</button>
+        </div>
+
+        <div class="tune-compare">
+          <div>
+            <span class="tune-label">What your finger drew</span>
+            <div class="tune-paper"><canvas id="out-raw"></canvas></div>
+          </div>
+          <div>
+            <span class="tune-label">How it will be saved</span>
+            <div class="tune-paper"><canvas id="out-ink"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <form class="tune-controls card" method="post" action="/admin/tuning" id="tune-form">
+        <h2>Settings</h2>
+        <p class="hint">These apply to everyone signing from now on. Existing signatures are untouched.</p>
+
+        <div class="field">
+          <label for="tolerance">Noise removal <output id="tolerance-out"></output></label>
+          <input type="range" id="tolerance" name="tolerance" min="0" max="6" step="0.1"
+                 value="<%= settings.tolerance %>">
+          <p class="hint">
+            How much wobble to discard. The strongest control for a finger. Too high and genuine corners
+            start to disappear.
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="smoothing">Softening <output id="smoothing-out"></output></label>
+          <input type="range" id="smoothing" name="smoothing" min="0" max="6" step="1"
+                 value="<%= settings.smoothing %>">
+          <p class="hint">Rounds what is left. Raise it if the line still looks angular.</p>
+        </div>
+
+        <div class="field">
+          <label for="maxWidth">Thickest stroke <output id="maxWidth-out"></output></label>
+          <input type="range" id="maxWidth" name="maxWidth" min="1" max="10" step="0.1"
+                 value="<%= settings.maxWidth %>">
+          <p class="hint">The weight where the pen is moving slowly.</p>
+        </div>
+
+        <div class="field">
+          <label for="minWidth">Thinnest stroke <output id="minWidth-out"></output></label>
+          <input type="range" id="minWidth" name="minWidth" min="0.2" max="4" step="0.1"
+                 value="<%= settings.minWidth %>">
+          <p class="hint">The weight through fast sweeps. A wider gap between the two looks more like a pen.</p>
+        </div>
+
+        <div class="field">
+          <label for="speedCap">Speed sensitivity <output id="speedCap-out"></output></label>
+          <input type="range" id="speedCap" name="speedCap" min="0.3" max="5" step="0.1"
+                 value="<%= settings.speedCap %>">
+          <p class="hint">Lower makes the line thin out sooner as the hand speeds up.</p>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost" id="reset-btn">Reset to defaults</button>
+          <button type="submit" class="btn">Save as default</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/foot') %>
+<script>
+  window.__TUNE__ = {
+    settings: <%- JSON.stringify(settings) %>,
+    defaults: <%- JSON.stringify(defaults) %>,
+  };
+</script>
+<script type="module" src="/static/js/tuning.js?v=<%= v %>"></script>

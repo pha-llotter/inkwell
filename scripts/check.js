@@ -241,6 +241,42 @@ try {
     dl.status === 200 && dl.head[0] === 0x50 && dl.head[1] === 0x4b && dl.bytes > 200,
     `status ${dl.status}, ${dl.bytes} bytes, magic ${dl.head}`);
 
+  /* ---- tuning ---- */
+  await ap.goto(`${BASE}/admin/tuning`);
+  check('the tuning page is reachable and closed to strangers',
+    (await ap.locator('#pad').isVisible()) &&
+    (await sp.goto(`${BASE}/admin/tuning`), sp.url().endsWith('/login')));
+
+  await ap.evaluate(() => {
+    document.getElementById('maxWidth').value = '6.5';
+    document.getElementById('tolerance').value = '2.4';
+  });
+  await ap.click('#tune-form button[type=submit]');
+  await ap.waitForURL('**/tuning?saved=1');
+
+  const applied = await ap.evaluate(async () => (await fetch('/api/ink-settings')).json());
+  check('tuning is saved and served to the capture page',
+    Math.abs(applied.maxWidth - 6.5) < 0.01 && Math.abs(applied.tolerance - 2.4) < 0.01,
+    JSON.stringify(applied));
+
+  const usedByCapture = await ap.evaluate(async () => {
+    const html = await (await fetch('/')).text();
+    const m = html.match(/window\.__INK__ = (\{.*?\});/);
+    return m ? JSON.parse(m[1]) : null;
+  });
+  check('the capture page is handed those settings, not the shipped defaults',
+    usedByCapture && Math.abs(usedByCapture.maxWidth - 6.5) < 0.01,
+    JSON.stringify(usedByCapture));
+
+  // A minimum above the maximum would render nothing at all.
+  await ap.evaluate(async () => {
+    const body = new URLSearchParams({ tolerance: '1', smoothing: '2', minWidth: '9', maxWidth: '2', speedCap: '1' });
+    await fetch('/admin/tuning', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+  });
+  const clamped = await ap.evaluate(async () => (await fetch('/api/ink-settings')).json());
+  check('a thinnest wider than the thickest is corrected, not stored',
+    clamped.minWidth <= clamped.maxWidth, JSON.stringify(clamped));
+
   /* ---- the open form is rate limited ---- */
   const burst = await ap.evaluate(async () => {
     const results = [];

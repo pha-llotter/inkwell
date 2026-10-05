@@ -35,11 +35,11 @@ const shot = await page.evaluate(async () => {
   function fakeSignature() {
     const strokes = [];
     let t = 0;
-    const jitter = () => (Math.random() - 0.5) * 2.6;
+    const jitter = () => (Math.random() - 0.5) * 5.5;
 
     const main = [];
-    for (let i = 0; i <= 150; i++) {
-      const p = i / 150;
+    for (let i = 0; i <= 70; i++) {
+      const p = i / 70;
       // Deliberately uneven speed: slow at the start, fast through the middle.
       const speed = 0.35 + Math.sin(p * Math.PI) * 1.5;
       t += 16 / speed;
@@ -85,7 +85,7 @@ const shot = await page.evaluate(async () => {
   }
 
   // What the raw samples look like: uniform width, every wobble preserved.
-  panel('Raw capture - every sample joined by a straight line of one width', (ctx) => {
+  panel('A finger on a phone - raw samples, one width', (ctx) => {
     ctx.strokeStyle = '#0b1220';
     ctx.lineWidth = 1.8;
     ctx.lineJoin = 'round';
@@ -98,7 +98,7 @@ const shot = await page.evaluate(async () => {
     }
   });
 
-  panel('Smoothed - tremor filtered, curve fitted, width follows pen speed', (ctx) => {
+  panel('After the new pipeline - noise discarded, curve fitted, weight from speed', (ctx) => {
     renderInk(ctx, strokes);
   });
 

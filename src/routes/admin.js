@@ -5,6 +5,7 @@ import path from 'node:path';
 import { db, nowIso } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { zipStore } from '../zip.js';
+import { inkSettings, saveInkSettings, DEFAULTS } from '../ink-settings.js';
 
 const router = Router();
 
@@ -93,6 +94,21 @@ router.post('/admin/:id/delete', requireAuth, (req, res) => {
     req.session.flash = { type: 'ok', text: `Deleted the signature for ${sig.first_name} ${sig.last_name}.` };
   }
   res.redirect('/admin');
+});
+
+/**
+ * Tuning. The shipped numbers are a guess at an average finger; this is where
+ * they are replaced with ones chosen against real handwriting on the actual
+ * device people will sign on.
+ */
+router.get('/admin/tuning', requireAuth, (req, res) => {
+  res.render('tuning', { settings: inkSettings(), defaults: DEFAULTS, saved: req.query.saved === '1' });
+});
+
+router.post('/admin/tuning', requireAuth, (req, res) => {
+  saveInkSettings(req.body || {});
+  req.session.flash = { type: 'ok', text: 'Saved. New signatures will use these.' };
+  res.redirect('/admin/tuning?saved=1');
 });
 
 export default router;

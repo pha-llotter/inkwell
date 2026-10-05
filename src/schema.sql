@@ -48,3 +48,16 @@ CREATE TABLE IF NOT EXISTS capture_attempts (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_attempts_ip ON capture_attempts(ip, created_at);
+
+-- One row. How the ink is drawn, tuned by the administrator against their own
+-- handwriting on their own device, because no default suits every finger.
+CREATE TABLE IF NOT EXISTS ink_settings (
+  id         INTEGER PRIMARY KEY CHECK (id = 1),
+  tolerance  REAL,
+  smoothing  INTEGER,
+  min_width  REAL,
+  max_width  REAL,
+  speed_cap  REAL,
+  updated_at TEXT
+);
+INSERT OR IGNORE INTO ink_settings (id) VALUES (1);
